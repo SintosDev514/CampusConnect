@@ -113,6 +113,9 @@ fun AdminDashboardScreen(vm: AdminDashboardViewModel) {
                     }
                 }
             }
+
+            // Added Spacer to ensure bottom content isn't cut off by Navigation Bar
+            Spacer(Modifier.height(84.dp))
         }
     }
 }
