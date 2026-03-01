@@ -113,6 +113,11 @@ private fun CreateEventDialog(
     var category by remember { mutableStateOf("Academic") }
     var desc by remember { mutableStateOf("") }
 
+    // Validation State
+    var titleError by remember { mutableStateOf<String?>(null) }
+    var dateError by remember { mutableStateOf<String?>(null) }
+    var locationError by remember { mutableStateOf<String?>(null) }
+
     // Date Picker State
     val dateState = rememberDatePickerState()
     var showDatePicker by remember { mutableStateOf(false) }
@@ -123,15 +128,30 @@ private fun CreateEventDialog(
     var showTimePicker by remember { mutableStateOf(false) }
     var timeText by remember { mutableStateOf("") }
 
+    fun validate(): Boolean {
+        var isValid = true
+        if (title.isBlank()) { titleError = "Title is required"; isValid = false } else titleError = null
+        if (dateText.isBlank()) { dateError = "Date is required"; isValid = false } else dateError = null
+        if (location.isBlank()) { locationError = "Location is required"; isValid = false } else locationError = null
+        return isValid
+    }
+
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text("Create New Event") },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                OutlinedTextField(title, { title = it }, label = { Text("Event Title") }, modifier = Modifier.fillMaxWidth())
+                OutlinedTextField(
+                    value = title, 
+                    onValueChange = { title = it; titleError = null }, 
+                    label = { Text("Event Title") }, 
+                    modifier = Modifier.fillMaxWidth(),
+                    isError = titleError != null,
+                    supportingText = { titleError?.let { Text(it) } },
+                    shape = RoundedCornerShape(12.dp)
+                )
 
                 Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                    // Date Field (Triggers Picker)
                     OutlinedTextField(
                         value = dateText,
                         onValueChange = {},
@@ -141,17 +161,16 @@ private fun CreateEventDialog(
                             .clickable { showDatePicker = true },
                         enabled = false,
                         trailingIcon = { Icon(Icons.Outlined.CalendarToday, null) },
+                        isError = dateError != null,
+                        supportingText = { dateError?.let { Text(it) } },
+                        shape = RoundedCornerShape(12.dp),
                         colors = OutlinedTextFieldDefaults.colors(
                             disabledTextColor = MaterialTheme.colorScheme.onSurface,
-                            disabledBorderColor = MaterialTheme.colorScheme.outline,
-                            disabledLeadingIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                            disabledTrailingIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                            disabledLabelColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                            disabledPlaceholderColor = MaterialTheme.colorScheme.onSurfaceVariant
+                            disabledBorderColor = if (dateError != null) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.outline,
+                            disabledLabelColor = if (dateError != null) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     )
 
-                    // Time Field (Triggers Picker)
                     OutlinedTextField(
                         value = timeText,
                         onValueChange = {},
@@ -161,32 +180,37 @@ private fun CreateEventDialog(
                             .clickable { showTimePicker = true },
                         enabled = false,
                         trailingIcon = { Icon(Icons.Outlined.Schedule, null) },
+                        shape = RoundedCornerShape(12.dp),
                         colors = OutlinedTextFieldDefaults.colors(
                             disabledTextColor = MaterialTheme.colorScheme.onSurface,
-                            disabledBorderColor = MaterialTheme.colorScheme.outline,
-                            disabledLeadingIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                            disabledTrailingIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                            disabledLabelColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                            disabledPlaceholderColor = MaterialTheme.colorScheme.onSurfaceVariant
+                            disabledBorderColor = MaterialTheme.colorScheme.outline
                         )
                     )
                 }
 
-                OutlinedTextField(location, { location = it }, label = { Text("Location") }, modifier = Modifier.fillMaxWidth())
-                OutlinedTextField(category, { category = it }, label = { Text("Category") }, modifier = Modifier.fillMaxWidth())
-                OutlinedTextField(desc, { desc = it }, label = { Text("Description") }, modifier = Modifier.fillMaxWidth())
+                OutlinedTextField(
+                    value = location, 
+                    onValueChange = { location = it; locationError = null }, 
+                    label = { Text("Location") }, 
+                    modifier = Modifier.fillMaxWidth(),
+                    isError = locationError != null,
+                    supportingText = { locationError?.let { Text(it) } },
+                    shape = RoundedCornerShape(12.dp)
+                )
+                
+                OutlinedTextField(category, { category = it }, label = { Text("Category") }, modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(12.dp))
+                OutlinedTextField(desc, { desc = it }, label = { Text("Description") }, modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(12.dp))
             }
         },
         confirmButton = {
             Button(
-                onClick = { onCreate(title, dateText, timeText, location, category, desc) },
+                onClick = { if (validate()) onCreate(title, dateText, timeText, location, category, desc) },
                 colors = ButtonDefaults.buttonColors(containerColor = AdminColors.Primary)
             ) { Text("Create Event") }
         },
         dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } }
     )
 
-    // Date Picker Dialog
     if (showDatePicker) {
         DatePickerDialog(
             onDismissRequest = { showDatePicker = false },
@@ -195,6 +219,7 @@ private fun CreateEventDialog(
                     dateState.selectedDateMillis?.let {
                         val sdf = SimpleDateFormat("MMM dd, yyyy", Locale.getDefault())
                         dateText = sdf.format(Date(it))
+                        dateError = null
                     }
                     showDatePicker = false
                 }) { Text("OK") }
@@ -205,7 +230,6 @@ private fun CreateEventDialog(
         }
     }
 
-    // Time Picker Dialog
     if (showTimePicker) {
         AlertDialog(
             onDismissRequest = { showTimePicker = false },
@@ -220,9 +244,7 @@ private fun CreateEventDialog(
                 }) { Text("OK") }
             },
             dismissButton = { TextButton(onClick = { showTimePicker = false }) { Text("Cancel") } },
-            text = {
-                TimePicker(state = timeState)
-            }
+            text = { TimePicker(state = timeState) }
         )
     }
 }

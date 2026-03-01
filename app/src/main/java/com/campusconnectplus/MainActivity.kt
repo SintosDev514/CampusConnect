@@ -110,13 +110,29 @@ class MainActivity : ComponentActivity() {
                         }
                     }
 
-                    // ---------- ADMIN LOGIN ----------
+                    // ---------- ADMIN LOGIN / SIGNUP ----------
                     composable("admin/login") {
-                        AdminLoginScreen { _, _, _ ->
-                            nav.navigate(AdminTab.Dashboard.route) {
-                                popUpTo("admin/login") { inclusive = true }
-                            }
-                        }
+                        AdminLoginScreen(
+                            onSignIn = { _, _, _ ->
+                                nav.navigate(AdminTab.Dashboard.route) {
+                                    popUpTo("admin/login") { inclusive = true }
+                                }
+                            },
+                            onNavigateToSignUp = { nav.navigate("admin/signup") }
+                        )
+                    }
+
+                    composable("admin/signup") {
+                        AdminSignUpScreen(
+                            onSignUp = { role, name, email, pass ->
+                                // In a real app, save user to DB here using the role.
+                                // For now, navigate back to login.
+                                nav.navigate("admin/login") {
+                                    popUpTo("admin/signup") { inclusive = true }
+                                }
+                            },
+                            onNavigateToLogin = { nav.navigate("admin/login") }
+                        )
                     }
 
                     // ---------- ADMIN ----------
